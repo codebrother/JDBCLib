@@ -21,15 +21,15 @@ public class ConnectionLibImpl implements ConnectionLib {
 	private Connection connection = null;
 
 	/**
-	 * »ñÈ¡Êı¾İ¿âÁ¬½Ó
+	 * è·å–æ•°æ®åº“è¿æ¥
 	 * @return
 	 */
 	@Override
 	public Connection getConnection() {
 		try {
-			Class.forName("com.mysql.jdbc.Driver"); // ¼ÓÔØmysqlÇı¶¯
+			Class.forName("com.mysql.jdbc.Driver"); // åŠ è½½mysqlé©±åŠ¨
 		} catch (ClassNotFoundException e) {
-			logger.error("Çı¶¯¼ÓÔØ´íÎó");
+			logger.error("é©±åŠ¨åŠ è½½é”™è¯¯");
 //			e.printStackTrace();
 		}
 		try {
@@ -40,16 +40,16 @@ public class ConnectionLibImpl implements ConnectionLib {
 		} catch (SQLException e) {
 			e.printStackTrace();
 		}
-		logger.debug("ÒÑ»ñÈ¡Á¬½Ó");
+		logger.debug("å·²è·å–è¿æ¥");
 		return connection;
 	}
 	
 	@Override
 	public Connection getConnection(DBSource dbSource) {
 		try {
-			Class.forName(dbSource.getDriveClass()); // ¼ÓÔØDBÇı¶¯
+			Class.forName(dbSource.getDriveClass()); // åŠ è½½DBé©±åŠ¨
 		} catch (ClassNotFoundException e) {
-			logger.debug("Çı¶¯¼ÓÔØ´íÎó");
+			logger.debug("é©±åŠ¨åŠ è½½é”™è¯¯");
 //			e.printStackTrace();
 		}
 		try {
@@ -64,7 +64,7 @@ public class ConnectionLibImpl implements ConnectionLib {
 		} catch (NullPointerException e) {
 			logger.error(e.getMessage());
 		}
-		logger.debug("ÒÑ»ñÈ¡Á¬½Ó");
+		logger.debug("å·²è·å–è¿æ¥");
 		// print internal state
 	    LoggerContext lc = (LoggerContext) LoggerFactory.getILoggerFactory();
 	    StatusPrinter.print(lc);
@@ -72,7 +72,7 @@ public class ConnectionLibImpl implements ConnectionLib {
 	}
 	
 	/**
-	 * ·µ»ØSQL²éÑ¯½á¹û
+	 * è¿”å›SQLæŸ¥è¯¢ç»“æœ
 	 * @param sql
 	 * @param object
 	 * @return
@@ -99,7 +99,7 @@ public class ConnectionLibImpl implements ConnectionLib {
 	}
 	
 	/**
-	 * ·µ»ØSQL¸üĞÂ½á¹û
+	 * è¿”å›SQLæ›´æ–°ç»“æœ
 	 * @param sql
 	 * @param object
 	 * @return
@@ -126,7 +126,7 @@ public class ConnectionLibImpl implements ConnectionLib {
 	}
 	
 	/**
-	 * ÊÍ·ÅÊı¾İ¿âÁ¬½Ó
+	 * é‡Šæ”¾æ•°æ®åº“è¿æ¥
 	 * @param ps
 	 */
 	@Override
@@ -141,7 +141,7 @@ public class ConnectionLibImpl implements ConnectionLib {
 		}
 	}
 	/**
-	 * ÊÍ·ÅÊı¾İ¿âÁ¬½Ó
+	 * é‡Šæ”¾æ•°æ®åº“è¿æ¥
 	 * @param stmt
 	 */
 	@Override
@@ -156,7 +156,7 @@ public class ConnectionLibImpl implements ConnectionLib {
 		}
 	}	
 	/**
-	 * ÊÍ·ÅÊı¾İ¿âÁ¬½Ó
+	 * é‡Šæ”¾æ•°æ®åº“è¿æ¥
 	 * @param rs
 	 */
 	@Override
