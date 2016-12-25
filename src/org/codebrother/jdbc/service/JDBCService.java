@@ -21,10 +21,12 @@ public interface JDBCService {
 	int update(String sql);
 	int select(String sql);
 	int truncate(String tableName);
-	int transfer(DBSource source, DBSource dest, String sql);
+	int transfer(String sour, String sour_sql, Object[] obj_sour, String dest, String dest_sql);
 	
 	int executeUpdate(String sql, Object[] object);
 	ResultSet executeQuery(String sql, Object[] object);
+	int executeUpdate(DBSource dbSource, String sql, Object[] object);
+	ResultSet executeQuery(DBSource dbSource,String sql, Object[] object);
 	void close(ResultSet rs);
 	void close(Statement stmt);
 	void close(PreparedStatement ps);

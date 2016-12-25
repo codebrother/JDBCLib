@@ -17,12 +17,24 @@ public class JDBCServiceImpl implements JDBCService {
 	
 	private DBSource dbSource;
 	private Connection connection;
+	private ConnectionLibImpl connectionLibImpl;
+	
+	public ConnectionLibImpl getConnectionLibImpl() {
+		return connectionLibImpl;
+	}
+	public void setConnectionLibImpl(ConnectionLibImpl connectionLibImpl) {
+		this.connectionLibImpl = connectionLibImpl;
+	}
 	
 	public DBSource getDbSource() {
 		return dbSource;
 	}
 	public void setDbSource(DBSource dbSource) {
 		this.dbSource = dbSource;
+	}
+	
+	public JDBCServiceImpl() {
+		
 	}
 	
 	public JDBCServiceImpl(String file) {
@@ -127,7 +139,21 @@ public class JDBCServiceImpl implements JDBCService {
 	}
 
 	@Override
-	public int transfer(DBSource source, DBSource dest, String sql) {
+	public int transfer(String sour, String sour_sql, Object[] obj_sour, String dest, String dest_sql) {
+		ResultSet rs = executeQuery(readFromFile(sour), sour_sql, obj_sour);
+		try {
+			byte count = (byte)(dest_sql.split("\\?").length - 1);
+			Object[] obj = new Object[count];
+			while(rs.next()) {
+				for(byte i=0; i<count; i++) {
+					obj[i] = rs.getObject(i+1);
+				}
+				executeUpdate(readFromFile(dest), dest_sql, obj);
+			}
+			obj = null;
+		} catch (SQLException e) {
+			e.printStackTrace();
+		}
 		return 0;
 	}
 	
@@ -269,5 +295,48 @@ public class JDBCServiceImpl implements JDBCService {
 		close(rs);
 		close(stmt);
 		close(connection);
+	}
+	@Override
+	public int executeUpdate(DBSource dbSource, String sql, Object[] object) {
+		int result = 0;
+		PreparedStatement ps = null;
+		try {
+			connection = new ConnectionLibImpl(dbSource).getConnection();
+			ps = connection.prepareStatement(sql);
+			if(null != object) {
+				for(int i=0; i<object.length; i++) {
+					if(null == object[i]) {
+						object[i] = "";
+					}
+					ps.setObject(i+1, object[i]);
+				}
+			}
+			result = ps.executeUpdate();
+		} catch (SQLException e) {
+			e.printStackTrace();
+		} finally {
+			close(ps, connection);
+		}
+		return result;
+	}
+	@Override
+	public ResultSet executeQuery(DBSource dbSource, String sql, Object[] object) {
+		ResultSet rs = null;
+		PreparedStatement ps = null;
+		try {
+			connection = new ConnectionLibImpl(dbSource).getConnection();
+			ps = connection.prepareStatement(sql);
+			if(null != object) {
+				for(int i=0; i<object.length; i++) {
+					ps.setObject(i+1, object[i]);
+				}				
+			}
+			rs = ps.executeQuery();
+		} catch (SQLException e) {
+			e.printStackTrace();
+		} finally {
+//			close(rs, ps, connection);
+		}
+		return rs;
 	}
 }
