@@ -1,5 +1,8 @@
 package org.codebrother.jdbc.service.impl;
 
+import java.io.BufferedReader;
+import java.io.FileNotFoundException;
+import java.io.FileReader;
 import java.io.IOException;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
@@ -34,7 +37,8 @@ public class JDBCServiceImpl implements JDBCService {
 	}
 	
 	public JDBCServiceImpl() {
-		
+		this.dbSource = getInstance("/dbKey.properties");
+		this.connection = new ConnectionLibImpl(this.dbSource).getConnection();
 	}
 	
 	public JDBCServiceImpl(String file) {
@@ -44,16 +48,43 @@ public class JDBCServiceImpl implements JDBCService {
 	
 	private DBSource getInstance(String dbFile) {
 		if (null == dbSource) {
-			this.dbSource = readFromFile(dbFile);
+//			this.dbSource = readFromFile(dbFile);
+			this.dbSource = getDBfile(dbFile);
 		}
 		return this.dbSource;
+	}
+	
+	public void getDBfile() {
+		BufferedReader br = null;
+		try {
+			br = new BufferedReader(new FileReader("db.properties"));
+			String line = "";
+			while( null != (line = br.readLine()) ) {
+				readFromFile(line);
+			}
+		} catch (FileNotFoundException e) {
+			e.printStackTrace();
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
+		
+	}
+	
+	public DBSource getDBfile(String file) {
+		Properties prop = new Properties();
+		try {
+			prop.load(getClass().getResourceAsStream(file));
+		} catch (IOException e) {
+//			e.printStackTrace();
+		}
+		String dbValue = prop.getProperty("def_db");
+		return readFromFile(dbValue);
 	}
 	
 	@Override
 	public DBSource readFromFile(String file) {
 		DBSource dbSource = new DBSource();
 		Properties prop = new Properties();
-		System.out.println(file);
 		try {
 			prop.load(getClass().getResourceAsStream(file));
 		} catch (IOException e) {
