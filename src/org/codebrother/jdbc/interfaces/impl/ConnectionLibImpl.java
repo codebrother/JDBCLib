@@ -38,7 +38,6 @@ public class ConnectionLibImpl implements ConnectionLib {
 			Class.forName(dbSource.getDriveClass()); // 加载DB驱动
 		} catch (ClassNotFoundException e) {
 			logger.error("驱动加载错误");
-//			e.printStackTrace();
 		}
 		try {
 			String url = dbSource.getDbUrl();
