@@ -46,10 +46,13 @@ public class ConnectionLibImpl implements ConnectionLib {
 			logger.debug(url);
 			connection = DriverManager.getConnection(url, user, password);
 		} catch (SQLException e) {
-//			e.printStackTrace();
 			logger.error(e.getMessage());
 		} catch (NullPointerException e) {
 			logger.error(e.getMessage());
+		} finally {
+			if(null == connection) {
+				logger.error("Cann't link the database source");
+			}
 		}
 		logger.debug("已获取连接");
 		// print internal state
@@ -57,5 +60,5 @@ public class ConnectionLibImpl implements ConnectionLib {
 	    StatusPrinter.print(lc);
 		return connection;
 	}
-
+	
 }

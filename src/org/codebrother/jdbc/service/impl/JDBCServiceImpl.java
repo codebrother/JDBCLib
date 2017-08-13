@@ -1,6 +1,8 @@
 package org.codebrother.jdbc.service.impl;
 
 import java.io.BufferedReader;
+import java.io.File;
+import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.FileReader;
 import java.io.IOException;
@@ -9,18 +11,24 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Properties;
 
 import org.codebrother.jdbc.entity.DBSource;
 import org.codebrother.jdbc.interfaces.impl.ConnectionLibImpl;
 import org.codebrother.jdbc.service.JDBCService;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public class JDBCServiceImpl implements JDBCService {
-	
+//	日志记录
+	private Logger logger = LoggerFactory.getLogger(this.getClass());
 	private DBSource dbSource;
 	private Connection connection;
 	private ConnectionLibImpl connectionLibImpl;
+//	数据源列表
+	private List<String> dbArray = null;
 	
 	public ConnectionLibImpl getConnectionLibImpl() {
 		return connectionLibImpl;
@@ -36,13 +44,23 @@ public class JDBCServiceImpl implements JDBCService {
 		this.dbSource = dbSource;
 	}
 	
+	private void init() {
+		this.dbArray = new ArrayList<String>();
+	}
+	
 	public JDBCServiceImpl() {
+		init();
 		this.dbSource = getInstance("/dbKey.properties");
 		this.connection = new ConnectionLibImpl(this.dbSource).getConnection();
 	}
 	
 	public JDBCServiceImpl(String file) {
+		init();
 		this.dbSource = getInstance(file);
+		if(null == dbSource) {
+			logger.error("The database source is null.");
+			return;
+		}
 		this.connection = new ConnectionLibImpl(this.dbSource).getConnection();
 	}
 	
@@ -70,10 +88,37 @@ public class JDBCServiceImpl implements JDBCService {
 		
 	}
 	
+	public void getDbfiles(String file) {
+		BufferedReader br = null;
+		try {
+			br = new BufferedReader(new FileReader(file));
+			String line = null;
+//			循环读取文件，并加入到集合
+			while ( null != (line = br.readLine()) ) {
+				this.dbArray.add(line);
+			}
+		} catch (FileNotFoundException e) {
+			logger.error("The file " + file + " is not found.");
+			logger.error(e.getMessage());
+		} catch (IOException e) {
+			logger.error(e.getMessage());
+		} finally {
+			try {
+				if(null != br) {
+					br.close();
+					br = null;
+				}
+			} catch (IOException e) {
+				logger.error(e.getMessage());
+			}
+		}
+	}
+	
 	public DBSource getDBfile(String file) {
 		Properties prop = new Properties();
 		try {
-			prop.load(getClass().getResourceAsStream(file));
+//			prop.load(getClass().getResourceAsStream(file));
+			prop.load(new FileInputStream(new File(file)));
 		} catch (IOException e) {
 //			e.printStackTrace();
 		}
@@ -86,19 +131,38 @@ public class JDBCServiceImpl implements JDBCService {
 		DBSource dbSource = new DBSource();
 		Properties prop = new Properties();
 		try {
-			prop.load(getClass().getResourceAsStream(file));
+//			prop.load(getClass().getResourceAsStream(file));
+			if( !new File(file).exists() ) {
+				logger.error("error");
+				return null;
+			}
+			prop.load(new FileInputStream(new File(file)));
 		} catch (IOException e) {
-//			e.printStackTrace();
+			logger.error(e.getMessage());
 		}
 		dbSource.setId(prop.getProperty("id", "null"));
 		dbSource.setDriveClass(prop.getProperty("DriverClass"));
 		if (dbSource.getDriveClass().toLowerCase().contains("mysql")) {
-			dbSource.setDbUrl(prop.getProperty("url") + prop.getProperty("ip")+ ":" + prop.getProperty("port", "3306") + "/" + prop.getProperty("sid", "orcl"));			
+			dbSource.setDbUrl(prop.getProperty("url") 
+					+ prop.getProperty("ip") 
+					+ ":" 
+					+ prop.getProperty("port", "3306") 
+					+ "/" 
+					+ prop.getProperty("sid", "orcl"));			
 		} else if (dbSource.getDriveClass().toLowerCase().contains("oracle")) {
-			dbSource.setDbUrl(prop.getProperty("url") + prop.getProperty("ip")+ ":" + prop.getProperty("port", "1521") + ":" + prop.getProperty("sid", "orcl"));			
+			dbSource.setDbUrl(prop.getProperty("url") 
+					+ prop.getProperty("ip") 
+					+ ":" 
+					+ prop.getProperty("port", "1521") 
+					+ ":" 
+					+ prop.getProperty("sid", "orcl"));			
+		} else {
+			logger.error("The database source file: " + file + " is not be supported");
+			return null;
 		}
 		dbSource.setDbUser(prop.getProperty("user"));
 		dbSource.setDbPassword(prop.getProperty("password"));
+		dbSource.setSql(prop.getProperty("sql", "select 1 from dual"));
 		dbSource.setRemark(prop.getProperty("remark", "no remark"));
 		this.dbSource = dbSource;
 		return this.dbSource;
@@ -254,7 +318,7 @@ public class JDBCServiceImpl implements JDBCService {
 				ps.close();
 				ps = null;
 			} catch (SQLException e) {
-				e.printStackTrace();
+				logger.error(e.getMessage());
 			}
 		}
 	}
@@ -269,7 +333,7 @@ public class JDBCServiceImpl implements JDBCService {
 				stmt.close();
 				stmt = null;
 			} catch (SQLException e) {
-				e.printStackTrace();
+				logger.error(e.getMessage());
 			}
 		}
 	}	
@@ -284,7 +348,7 @@ public class JDBCServiceImpl implements JDBCService {
 				rs.close();
 				rs = null;
 			} catch (SQLException e) {
-				e.printStackTrace();
+				logger.error(e.getMessage());
 			}
 		}
 	}
@@ -297,7 +361,7 @@ public class JDBCServiceImpl implements JDBCService {
 				connection.close();
 				connection = null;
 			} catch (SQLException e) {
-				e.printStackTrace();
+				logger.error(e.getMessage());
 			}
 		}
 	}
@@ -369,5 +433,35 @@ public class JDBCServiceImpl implements JDBCService {
 //			close(rs, ps, connection);
 		}
 		return rs;
+	}
+	
+	public void execute() {
+//		如果数据源为null，则继续下一个数据源连接测试
+		if(null == dbSource) {
+			logger.error("the database source is null, return\n");
+			return;
+		}
+//		如果数据源连接为null，则进行下一个数据源连接测试
+		if(null == this.connection) {
+			logger.error("session can not open, retry please.\n");
+			return;
+		}
+		logger.info("session opened");
+//		获取执行sql
+		String sql = dbSource.getSql();
+		PreparedStatement ps = null;
+		ResultSet rs = null;
+		try {
+			ps = this.connection.prepareStatement(sql);
+			rs = ps.executeQuery();
+			logger.info("execute:" + sql + "===" + rs.next());
+			logger.info("finished!");
+		} catch (SQLException e) {
+			logger.error(e.getMessage());
+		} finally {
+//			关闭数据源连接
+			close(rs, ps, this.connection);
+			logger.info("session closed\n");
+		}
 	}
 }
